@@ -1,1 +1,3 @@
 what3words
+wand
+exif
