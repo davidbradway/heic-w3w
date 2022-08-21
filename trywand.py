@@ -9,8 +9,8 @@ for file in os.listdir(SourceFolder):
     newfilename = file.replace(".HEIC", ".JPG")
     newfilename = newfilename.replace(".heic", ".jpg")
     TargetFile = TargetFolder + "/" + newfilename
-                                
-    img = Image(filename = SourceFile)
-    img.format='jpg'
-    img.save(filename = TargetFile)
-    img.close()
+    if not os.path.exists(TargetFile):
+        img = Image(filename = SourceFile)
+        img.format='jpg'
+        img.save(filename = TargetFile)
+        img.close()

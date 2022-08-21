@@ -1,6 +1,7 @@
 from exif import Image
 import secrets
 import what3words
+import os
 
 geocoder = what3words.Geocoder(secrets.W3W_API_KEY)
 
@@ -12,14 +13,18 @@ def decimal_coords(coords, ref):
 
 
 if __name__ == "__main__":
-    filename = 'JpgFolder/sample.jpg'
+    SourceFolder = "JpgFolder"
 
-    with open(filename, 'rb') as src:
-        img = Image(src)
+    for file in os.listdir(SourceFolder):
+        if file.endswith(".jpg"):
+            SourceFile = SourceFolder + "/" + file
 
-    lat = decimal_coords(img.gps_latitude, img.gps_latitude_ref)
-    lon = decimal_coords(img.gps_longitude, img.gps_longitude_ref)
+            with open(SourceFile, 'rb') as src:
+                img = Image(src)
 
-    res = geocoder.convert_to_3wa(what3words.Coordinates(lat, lon))
-    print(res)
+            lat = decimal_coords(img.gps_latitude, img.gps_latitude_ref)
+            lon = decimal_coords(img.gps_longitude, img.gps_longitude_ref)
+
+            res = geocoder.convert_to_3wa(what3words.Coordinates(lat, lon))
+            print(res)
 
