@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
     for file in os.listdir(SourceFolder):
         if file.endswith(".jpg"):
-            SourceFile = SourceFolder + "/" + file
+            SourceFile = os.path.join(SourceFolder, file)
 
             with open(SourceFile, 'rb') as src:
                 img = Image(src)
