@@ -12,11 +12,11 @@ def decimal_coords(coords, ref):
     return decimal_degrees
 
 
-if __name__ == "__main__":
-    SourceFolder = "JpgFolder"
+if __name__ == '__main__':
+    SourceFolder = 'JpgFolder'
 
     for file in os.listdir(SourceFolder):
-        if file.endswith(".jpg"):
+        if file.endswith('.jpg'):
             SourceFile = os.path.join(SourceFolder, file)
 
             with open(SourceFile, 'rb') as src:
@@ -26,5 +26,5 @@ if __name__ == "__main__":
             lon = decimal_coords(img.gps_longitude, img.gps_longitude_ref)
 
             res = geocoder.convert_to_3wa(what3words.Coordinates(lat, lon))
-            print(res)
+            print(f"{file} {lat}/{lon} - {res['words']}")
 
