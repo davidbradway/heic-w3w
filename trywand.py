@@ -18,3 +18,8 @@ for filename in os.listdir(SourceFolder):
             print(f'converted {SourceFile} to {img.format}')
         else:
             print(f'skipped {SourceFile}, already existed')
+
+        exif = {}
+        with Image(filename=SourceFile) as image:
+            exif.update((k[5:], v) for k, v in image.metadata.items() if k.startswith('exif:'))
+        print(exif)
