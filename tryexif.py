@@ -15,6 +15,7 @@ def decimal_coords(coords, ref):
 if __name__ == '__main__':
     SourceFolder = 'JpgFolder'
 
+    print(f'"Filename", "Latitude", "Longitude", "What3Words"')
     for file in os.listdir(SourceFolder):
         if file.endswith('.jpg'):
             SourceFile = os.path.join(SourceFolder, file)
@@ -26,5 +27,5 @@ if __name__ == '__main__':
             lon = decimal_coords(img.gps_longitude, img.gps_longitude_ref)
 
             res = geocoder.convert_to_3wa(what3words.Coordinates(lat, lon))
-            print(f"{file} {lat}/{lon} - {res['words']}")
+            print(f"\"{file}\", {lat}, {lon}, \"{res['words']}\"")
 
