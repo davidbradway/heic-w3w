@@ -2,6 +2,6 @@ README
 
 ```
 source venv/bin/activate
-python3 trywand.py
-python3 tryexif.py
+python3 convertheic.py
+python3 showlocs.py
 ```
