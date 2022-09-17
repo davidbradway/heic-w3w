@@ -1,3 +1,5 @@
 what3words
 wand
 exif
+borb
+pymupdf
