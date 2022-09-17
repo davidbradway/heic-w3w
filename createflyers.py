@@ -5,7 +5,7 @@ from borb.pdf import PageLayout
 from borb.pdf import Paragraph
 from borb.pdf import PDF
 from borb.pdf import Alignment
-from borb.pdf import Image
+from borb.pdf import Image as BorbImage
 from borb.pdf import ChunkOfText
 from borb.pdf import InlineFlow
 from borb.pdf import Barcode, BarcodeType
@@ -15,7 +15,13 @@ from borb.pdf import UnorderedList
 from borb.pdf import HexColor
 from borb.pdf.canvas.layout.emoji.emoji import Emojis
 
+import PIL
+
 import fitz
+
+import what3words
+
+from exif import Image as ExifImage
 
 from decimal import Decimal
 from pathlib import Path
@@ -23,6 +29,16 @@ import requests
 import os
 
 from names import *
+import secrets
+
+
+geocoder = what3words.Geocoder(secrets.W3W_API_KEY)
+
+def decimal_coords(coords, ref):
+    decimal_degrees = coords[0] + coords[1] / 60 + coords[2] / 3600
+    if ref == 'S' or ref == 'W':
+        decimal_degrees = -decimal_degrees
+    return decimal_degrees
 
 
 def make_flyer(SourceFile, name, w3w, filename, OutFolder):
@@ -44,7 +60,7 @@ def make_flyer(SourceFile, name, w3w, filename, OutFolder):
         Paragraph(
             f'Flexpost "Name": {name}',
             font_color=HexColor("#003087"),
-            font_size=Decimal(32),
+            font_size=Decimal(36),
             horizontal_alignment=Alignment.CENTERED,
         )
     )
@@ -53,7 +69,7 @@ def make_flyer(SourceFile, name, w3w, filename, OutFolder):
         Paragraph(
             "Erwin Road Adopt-A-Flexpost Program",
             font_color=HexColor("#003087"),
-            font_size=Decimal(26),
+            font_size=Decimal(24),
             horizontal_alignment=Alignment.CENTERED,
         )
     )
@@ -62,7 +78,7 @@ def make_flyer(SourceFile, name, w3w, filename, OutFolder):
         Paragraph(
             f"What3Words Location: ///{w3w}",
             font_color=HexColor("#003087"),
-            font_size=Decimal(20),
+            font_size=Decimal(18),
             horizontal_alignment=Alignment.CENTERED,
         )
     )
@@ -77,11 +93,14 @@ def make_flyer(SourceFile, name, w3w, filename, OutFolder):
                 ).content
             )
 
+    img = PIL.Image.open(SourceFile)
+    width, height = img.size
+
     layout.add(
-        Image(
+        BorbImage(
             Path(SourceFile),
-            width=Decimal(200),
-            height=Decimal(200),
+            width=Decimal(300),
+            height=Decimal(height/width*300.0),
             horizontal_alignment=Alignment.CENTERED,
         )
     )
@@ -96,10 +115,10 @@ def make_flyer(SourceFile, name, w3w, filename, OutFolder):
 
     layout.add(
         UnorderedList()
-            .add(Paragraph("Clear trash and debris quarterly."))
-            .add(Paragraph("Cut back weeds and bushes annually."))
-            .add(Paragraph("Report maintenance needs to Durham OneCall."))
-            .add(Paragraph("Transfer ownership if unable to meet obligations."))
+            .add(Paragraph("Clear trash and debris quarterly"))
+            .add(Paragraph("Cut back weeds and bushes annually"))
+            .add(Paragraph("Report maintenance needs to Durham OneCall"))
+            .add(Paragraph("Transfer ownership if unable to meet obligations"))
     )
 
     # add a Paragraph
@@ -135,11 +154,22 @@ def main():
     OutFolder = 'OutFolder'
 
     i = 0
+    print(f'"Filename", "Latitude", "Longitude", "What3Words"')
     for file in os.listdir(SourceFolder):
         if file.endswith('.jpg'):
             SourceFile = os.path.join(SourceFolder, file)
+
+            with open(SourceFile, 'rb') as src:
+                img = ExifImage(src)
+
+            lat = decimal_coords(img.gps_latitude, img.gps_latitude_ref)
+            lon = decimal_coords(img.gps_longitude, img.gps_longitude_ref)
+
+            res = geocoder.convert_to_3wa(what3words.Coordinates(lat, lon))
+            print(f"\"{file}\", {lat}, {lon}, \"{res['words']}\"")
+
             name = names[i]
-            w3w = "leaves.owners.solved"
+            w3w = f"{res['words']}"
             filename = f"{i:02}-{name}"
             make_flyer(SourceFile, name, w3w, filename, OutFolder)
             i = i + 1
