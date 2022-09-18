@@ -1,3 +1,5 @@
+from wand.image import Image as WandImage
+
 from borb.pdf import Document
 from borb.pdf import Page
 from borb.pdf import SingleColumnLayout
@@ -34,9 +36,10 @@ import secrets
 
 geocoder = what3words.Geocoder(secrets.W3W_API_KEY)
 
+
 def decimal_coords(coords, ref):
     decimal_degrees = coords[0] + coords[1] / 60 + coords[2] / 3600
-    if ref == 'S' or ref == 'W':
+    if ref == "S" or ref == "W":
         decimal_degrees = -decimal_degrees
     return decimal_degrees
 
@@ -100,7 +103,7 @@ def make_flyer(SourceFile, name, w3w, filename, OutFolder):
         BorbImage(
             Path(SourceFile),
             width=Decimal(300),
-            height=Decimal(height/width*300.0),
+            height=Decimal(height / width * 300.0),
             horizontal_alignment=Alignment.CENTERED,
         )
     )
@@ -115,10 +118,10 @@ def make_flyer(SourceFile, name, w3w, filename, OutFolder):
 
     layout.add(
         UnorderedList()
-            .add(Paragraph("Clear trash and debris quarterly"))
-            .add(Paragraph("Cut back weeds and bushes annually"))
-            .add(Paragraph("Report maintenance needs to Durham OneCall"))
-            .add(Paragraph("Transfer ownership if unable to meet obligations"))
+        .add(Paragraph("Clear trash and debris quarterly"))
+        .add(Paragraph("Cut back weeds and bushes annually"))
+        .add(Paragraph("Report maintenance needs to Durham OneCall"))
+        .add(Paragraph("Transfer ownership if unable to meet obligations"))
     )
 
     # add a Paragraph
@@ -137,41 +140,51 @@ def make_flyer(SourceFile, name, w3w, filename, OutFolder):
     layout.add(qr_code)
 
     # store as PDF
-    with open(os.path.join(OutFolder, filename+".pdf"), "wb") as pdf_file_handle:
+    with open(os.path.join(OutFolder, filename + ".pdf"), "wb") as pdf_file_handle:
         PDF.dumps(pdf_file_handle, doc)
 
     # convert to PNG
-    doc = fitz.open(os.path.join(OutFolder, filename+".pdf"))
+    doc = fitz.open(os.path.join(OutFolder, filename + ".pdf"))
     for page in doc:
         zoom = 2  # zoom factor
-        pix = page.get_pixmap(matrix = fitz.Matrix(zoom, zoom))
-        pix.save(os.path.join(OutFolder, filename+".png"))
+        pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom))
+        pix.save(os.path.join(OutFolder, filename + ".png"))
 
 
 def main():
 
-    SourceFolder = 'JpgFolder'
-    OutFolder = 'OutFolder'
+    HeicFolder = "HeicFolder"
+    JpgFolder = "JpgFolder"
+    OutFolder = "OutFolder"
 
     i = 0
-    print(f'"Filename", "Latitude", "Longitude", "What3Words"')
-    for file in os.listdir(SourceFolder):
-        if file.endswith('.jpg'):
-            SourceFile = os.path.join(SourceFolder, file)
+    print(f'"Name", "ImageName", "What3Words"')
+    for filename in os.listdir(HeicFolder):
+        if filename.endswith(".heic") or filename.endswith(".HEIC"):
+            SourceFile = os.path.join(HeicFolder, filename)
+            newfilename = filename.replace(".HEIC", ".jpg")
+            newfilename = newfilename.replace(".heic", ".jpg")
+            TargetFile = os.path.join(JpgFolder, newfilename)
+            if not os.path.exists(TargetFile):
+                img = WandImage(filename=SourceFile)
+                img.format = "jpg"
+                img.save(filename=TargetFile)
+                img.close()
 
-            with open(SourceFile, 'rb') as src:
+            with open(TargetFile, "rb") as src:
                 img = ExifImage(src)
 
             lat = decimal_coords(img.gps_latitude, img.gps_latitude_ref)
             lon = decimal_coords(img.gps_longitude, img.gps_longitude_ref)
 
-            res = geocoder.convert_to_3wa(what3words.Coordinates(lat, lon))
-            print(f"\"{file}\", {lat}, {lon}, \"{res['words']}\"")
-
             name = names[i]
+            pdffilename = f"{i:02}-{name}"
+            res = geocoder.convert_to_3wa(what3words.Coordinates(lat, lon))
             w3w = f"{res['words']}"
-            filename = f"{i:02}-{name}"
-            make_flyer(SourceFile, name, w3w, filename, OutFolder)
+
+            print(f'"{newfilename}", "{pdffilename}", "{w3w}"')
+
+            make_flyer(TargetFile, name, w3w, pdffilename, OutFolder)
             i = i + 1
 
 
