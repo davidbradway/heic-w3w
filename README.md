@@ -8,8 +8,9 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 python3 convertheic.py
-python3 showlocs.py
-python3 tryborb.py
+python3 createflyers.py
+
+python3 showlocs.py  # just shows the w3w locations
 ```
 
 ## Reference
