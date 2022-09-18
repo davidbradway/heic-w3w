@@ -5,22 +5,23 @@ import os
 
 geocoder = what3words.Geocoder(secrets.W3W_API_KEY)
 
+
 def decimal_coords(coords, ref):
     decimal_degrees = coords[0] + coords[1] / 60 + coords[2] / 3600
-    if ref == 'S' or ref == 'W':
+    if ref == "S" or ref == "W":
         decimal_degrees = -decimal_degrees
     return decimal_degrees
 
 
-if __name__ == '__main__':
-    SourceFolder = 'JpgFolder'
+if __name__ == "__main__":
+    SourceFolder = "JpgFolder"
 
     print(f'"Filename", "Latitude", "Longitude", "What3Words"')
     for file in os.listdir(SourceFolder):
-        if file.endswith('.jpg'):
+        if file.endswith(".jpg"):
             SourceFile = os.path.join(SourceFolder, file)
 
-            with open(SourceFile, 'rb') as src:
+            with open(SourceFile, "rb") as src:
                 img = Image(src)
 
             lat = decimal_coords(img.gps_latitude, img.gps_latitude_ref)
@@ -28,4 +29,3 @@ if __name__ == '__main__':
 
             res = geocoder.convert_to_3wa(what3words.Coordinates(lat, lon))
             print(f"\"{file}\", {lat}, {lon}, \"{res['words']}\"")
-
