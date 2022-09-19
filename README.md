@@ -7,9 +7,9 @@ python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 
-python3 convertheic.py
-python3 createflyers.py
+python3 createflyers.py  # does the whole process
 
+python3 convertheic.py  # just converts the HEIC fils to JPG
 python3 showlocs.py  # just shows the w3w locations
 ```
 
