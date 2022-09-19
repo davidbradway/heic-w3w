@@ -1,5 +1,6 @@
 from wand.image import Image as WandImage
-
+from exif import Image as ExifImage
+import what3words
 from borb.pdf import Document
 from borb.pdf import Page
 from borb.pdf import SingleColumnLayout
@@ -16,14 +17,7 @@ from borb.pdf import FixedColumnWidthTable
 from borb.pdf import UnorderedList
 from borb.pdf import HexColor
 from borb.pdf.canvas.layout.emoji.emoji import Emojis
-
-import PIL
-
 import fitz
-
-import what3words
-
-from exif import Image as ExifImage
 
 from decimal import Decimal
 from pathlib import Path
@@ -44,7 +38,7 @@ def decimal_coords(coords, ref):
     return decimal_degrees
 
 
-def make_flyer(SourceFile, name, w3w, filename, OutFolder):
+def make_flyer(JpgFile, name, w3w, OutFolder, OutFile):
     # create Document
     doc: Document = Document()
 
@@ -86,22 +80,12 @@ def make_flyer(SourceFile, name, w3w, filename, OutFolder):
         )
     )
 
-    # download image and store on disk, if needed
-    if not os.path.exists(SourceFile):
-        with open(SourceFile, "wb") as jpg_file_handle:
-            jpg_file_handle.write(
-                requests.get(
-                    "https://images.unsplash.com/photo-1514606491078-3c8ff84c87e7?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=3870&q=80",
-                    stream=True,
-                ).content
-            )
-
-    img = PIL.Image.open(SourceFile)
-    width, height = img.size
+    with WandImage(filename=JpgFile) as img:
+        width, height = img.width, img.height
 
     layout.add(
         BorbImage(
-            Path(SourceFile),
+            Path(JpgFile),
             width=Decimal(300),
             height=Decimal(height / width * 300.0),
             horizontal_alignment=Alignment.CENTERED,
@@ -131,7 +115,7 @@ def make_flyer(SourceFile, name, w3w, filename, OutFolder):
 
     # QR Code
     qr_code: LayoutElement = Barcode(
-        data="https://www.adoptaflexpost.com",
+        data="https://sites.duke.edu/davidbradway/adopt-a-flexpost",
         width=Decimal(96),
         height=Decimal(96),
         type=BarcodeType.QR,
@@ -144,11 +128,11 @@ def make_flyer(SourceFile, name, w3w, filename, OutFolder):
         PDF.dumps(pdf_file_handle, doc)
 
     # convert to PNG
-    doc = fitz.open(os.path.join(OutFolder, filename + ".pdf"))
-    for page in doc:
-        zoom = 2  # zoom factor
-        pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom))
-        pix.save(os.path.join(OutFolder, filename + ".png"))
+    with fitz.open(os.path.join(OutFolder, filename + ".pdf")) as pdf:
+        for page in pdf:
+            zoom = 2  # zoom factor
+            pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom))
+            pix.save(os.path.join(OutFolder, filename + ".png"))
 
 
 def main():
@@ -158,7 +142,7 @@ def main():
     OutFolder = "OutFolder"
 
     i = 0
-    print(f'"Name", "ImageName", "What3Words"')
+    print(f'"JpgFileName", "OutputName", "What3Words"')
     for filename in os.listdir(HeicFolder):
         if filename.endswith(".heic") or filename.endswith(".HEIC"):
             SourceFile = os.path.join(HeicFolder, filename)
@@ -173,18 +157,16 @@ def main():
 
             with open(TargetFile, "rb") as src:
                 img = ExifImage(src)
-
-            lat = decimal_coords(img.gps_latitude, img.gps_latitude_ref)
-            lon = decimal_coords(img.gps_longitude, img.gps_longitude_ref)
+                lat = decimal_coords(img.gps_latitude, img.gps_latitude_ref)
+                lon = decimal_coords(img.gps_longitude, img.gps_longitude_ref)
+                res = geocoder.convert_to_3wa(what3words.Coordinates(lat, lon))
+                w3w = f"{res['words']}"
 
             name = names[i]
-            pdffilename = f"{i:02}-{name}"
-            res = geocoder.convert_to_3wa(what3words.Coordinates(lat, lon))
-            w3w = f"{res['words']}"
+            OutFile = f"{i:02}-{name}"
 
             print(f'"{newfilename}", "{pdffilename}", "{w3w}"')
-
-            make_flyer(TargetFile, name, w3w, pdffilename, OutFolder)
+            make_flyer(TargetFile, name, w3w, OutFolder, OutFile)
             i = i + 1
 
 
