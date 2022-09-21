@@ -124,15 +124,15 @@ def make_flyer(JpgFile, name, w3w, OutFolder, OutFile):
     layout.add(qr_code)
 
     # store as PDF
-    with open(os.path.join(OutFolder, filename + ".pdf"), "wb") as pdf_file_handle:
+    with open(os.path.join(OutFolder, OutFile + ".pdf"), "wb") as pdf_file_handle:
         PDF.dumps(pdf_file_handle, doc)
 
     # convert to PNG
-    with fitz.open(os.path.join(OutFolder, filename + ".pdf")) as pdf:
+    with fitz.open(os.path.join(OutFolder, OutFile + ".pdf")) as pdf:
         for page in pdf:
             zoom = 2  # zoom factor
             pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom))
-            pix.save(os.path.join(OutFolder, filename + ".png"))
+            pix.save(os.path.join(OutFolder, OutFile + ".png"))
 
 
 def main():
@@ -165,7 +165,7 @@ def main():
             name = names[i]
             OutFile = f"{i:02}-{name}"
 
-            print(f'"{newfilename}", "{pdffilename}", "{w3w}"')
+            print(f'"{newfilename}", "{OutFile}", "{w3w}"')
             make_flyer(TargetFile, name, w3w, OutFolder, OutFile)
             i = i + 1
 
