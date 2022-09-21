@@ -12,11 +12,13 @@ from borb.pdf import Image as BorbImage
 from borb.pdf import ChunkOfText
 from borb.pdf import InlineFlow
 from borb.pdf import Barcode, BarcodeType
-from borb.pdf import TableCell
-from borb.pdf import FixedColumnWidthTable
 from borb.pdf import UnorderedList
 from borb.pdf import HexColor
 from borb.pdf.canvas.layout.emoji.emoji import Emojis
+from borb.pdf.canvas.layout.annotation.remote_go_to_annotation import (
+    RemoteGoToAnnotation,
+)
+
 import fitz
 
 from decimal import Decimal
@@ -50,7 +52,8 @@ def make_flyer(JpgFile, name, w3w, OutFolder, OutFile):
 
     # set a PageLayout
     layout: PageLayout = SingleColumnLayout(page)
-    flow: InlineFlow = InlineFlow()
+    flow1: InlineFlow = InlineFlow()
+    flow2: InlineFlow = InlineFlow()
 
     # Title
     layout.add(
@@ -64,21 +67,22 @@ def make_flyer(JpgFile, name, w3w, OutFolder, OutFile):
     # Subtitle
     layout.add(
         Paragraph(
-            "Erwin Road Adopt-A-Flexpost Program",
+            "Officially Unofficial Erwin Road Adopt-A-Flexpost Program",
             font_color=HexColor("#003087"),
             font_size=Decimal(24),
             horizontal_alignment=Alignment.CENTERED,
         )
     )
 
-    layout.add(
-        Paragraph(
-            f"What3Words Location: ///{w3w}",
-            font_color=HexColor("#003087"),
-            font_size=Decimal(18),
-            horizontal_alignment=Alignment.CENTERED,
-        )
+    link0: LayoutElement = Paragraph(
+        f"What3Words Location: ///{w3w}",
+        font_color=HexColor("#003087"),
+        font_size=Decimal(20),
+        horizontal_alignment=Alignment.CENTERED,
     )
+    layout.add(link0)
+    annot0: RemoteGoToAnnotation = RemoteGoToAnnotation(link0.get_previous_paint_box(), uri=f"http://w3w.co/{w3w}")
+    page.add_annotation(annot0)
 
     with WandImage(filename=JpgFile) as img:
         width, height = img.width, img.height
@@ -108,20 +112,24 @@ def make_flyer(JpgFile, name, w3w, OutFolder, OutFile):
         .add(Paragraph("Transfer ownership if unable to meet obligations"))
     )
 
-    # add a Paragraph
-    flow.add(ChunkOfText("Thanks! "))
-    flow.add(Emojis.BIKE.value)
-    layout.add(flow)
-
     # QR Code
     qr_code: LayoutElement = Barcode(
-        data="https://sites.duke.edu/davidbradway/adopt-a-flexpost",
+        data=f"http://w3w.co/{w3w}",
         width=Decimal(96),
         height=Decimal(96),
         type=BarcodeType.QR,
     )
-    # add a QR code
-    layout.add(qr_code)
+    flow1.add(qr_code)
+    link1: LayoutElement = ChunkOfText(f"w3w.co/{w3w}", vertical_alignment=Alignment.MIDDLE)
+    flow1.add(link1)
+    layout.add(flow1)
+    annot1: RemoteGoToAnnotation = RemoteGoToAnnotation(link1.get_previous_paint_box(), uri=f"http://w3w.co/{w3w}")
+    page.add_annotation(annot1)
+
+     # add in-line text and emoji
+    flow2.add(ChunkOfText("Thanks! "))
+    flow2.add(Emojis.BIKE.value)
+    layout.add(flow2)
 
     # store as PDF
     with open(os.path.join(OutFolder, OutFile + ".pdf"), "wb") as pdf_file_handle:
