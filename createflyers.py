@@ -16,9 +16,8 @@ import requests
 import os
 
 from names import *
-import secrets
 
-geocoder = what3words.Geocoder(secrets.W3W_API_KEY)
+geocoder = what3words.Geocoder(os.environ['W3W_API_KEY'])
 
 
 def decimal_coords(coords, ref):
