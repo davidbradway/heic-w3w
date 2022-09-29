@@ -3,8 +3,7 @@ from exif import Image as ExifImage
 import what3words
 from borb.pdf import (Document, Page, SingleColumnLayout, PageLayout,
 Paragraph, PDF, Alignment, ChunkOfText, InlineFlow, Barcode,
-BarcodeType, UnorderedList, HexColor)
-from borb.pdf import Image as BorbImage
+BarcodeType, UnorderedList, HexColor, Image as BorbImage)
 from borb.pdf.canvas.layout.emoji.emoji import Emojis
 from borb.pdf.canvas.layout.annotation.remote_go_to_annotation import (
     RemoteGoToAnnotation,
