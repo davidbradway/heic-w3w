@@ -127,21 +127,18 @@ def makeFlyer(JpgFile, name, w3w, OutFolder, OutFile):
     # QR Code
     qr_code: LayoutElement = Barcode(
         data=f"http://w3w.co/{w3w}",
-        width=Decimal(96),
-        height=Decimal(96),
+        width=Decimal(64),
+        height=Decimal(64),
         type=BarcodeType.QR,
     )
     flow1.add(qr_code)
-    link1: LayoutElement = ChunkOfText(f"w3w.co/{w3w}", vertical_alignment=Alignment.MIDDLE)
+    link1: LayoutElement = ChunkOfText(f"w3w.co/{w3w}", vertical_alignment=Alignment.BOTTOM, font_color=HexColor("0000FF"))
     flow1.add(link1)
+     # add in-line text and emoji
+    flow1.add(ChunkOfText(" --Thanks! ", vertical_alignment=Alignment.BOTTOM))
     layout.add(flow1)
     annot1: RemoteGoToAnnotation = RemoteGoToAnnotation(link1.get_previous_paint_box(), uri=f"http://w3w.co/{w3w}")
     page.add_annotation(annot1)
-
-     # add in-line text and emoji
-    flow2.add(ChunkOfText("Thanks! "))
-    flow2.add(Emojis.BIKE.value)
-    layout.add(flow2)
 
     # store as PDF
     with open(os.path.join(OutFolder, OutFile + ".pdf"), "wb") as pdf_file_handle:
