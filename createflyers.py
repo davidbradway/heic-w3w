@@ -17,7 +17,6 @@ from borb.pdf import (
     HexColor,
     Image as BorbImage,
 )
-from borb.pdf.canvas.layout.emoji.emoji import Emojis
 from borb.pdf.canvas.layout.annotation.remote_go_to_annotation import (
     RemoteGoToAnnotation,
 )
@@ -101,7 +100,7 @@ def makeFlyer(JpgFile, name, w3w, OutFolder, OutFile):
     Create a PDF flyer for a given photo, name, and location
 
     Parameters:
-    JpgFile (String):
+    JpgFile (String): path filename of the JPG file for the flyer image
     name (String): name to be given to the flexpost, from the names.py file
     w3w (String): location of the flexpost, from the JPG EXIF GPS data
     OutFolder (String): path to the folder where output files should be written
@@ -198,7 +197,7 @@ def makeFlyer(JpgFile, name, w3w, OutFolder, OutFile):
         font_color=HexColor("0000FF"),
     )
     flow1.add(link1)
-    # add in-line text and emoji
+    # add in-line text and link
     flow1.add(ChunkOfText(" --Thanks! ", vertical_alignment=Alignment.BOTTOM))
     layout.add(flow1)
     annot1: RemoteGoToAnnotation = RemoteGoToAnnotation(
