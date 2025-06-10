@@ -1,16 +1,17 @@
 # README
 
 ## Setup
+
+### Install ImageMagick
+https://imagemagick.org/script/download.php#windows
+
 ```bash
 python -m venv venv
 # venv\Scripts\activate  # Windows
 source venv/bin/activate
 pip install -r requirements.txt
 
-python3 createflyers.py  # does the whole process
-
-python3 convertheic.py  # just converts the HEIC fils to JPG
-python3 showlocs.py  # just shows the w3w locations
+python createflyers.py  # does the whole process
 ```
 
 ## Reference
