@@ -1,6 +1,5 @@
 from wand.image import Image as WandImage
 from exif import Image as ExifImage
-import what3words
 from borb.pdf import (
     Document,
     Page,
@@ -28,8 +27,6 @@ import requests
 import os
 
 from names import *
-
-geocoder = what3words.Geocoder(os.environ["W3W_API_KEY"])
 
 
 def decimal_coords(coords, ref):
@@ -75,34 +72,33 @@ def convertToJpg(HeicFolder, filename, JpgFolder):
     return TargetFile
 
 
-def getW3w(TargetFile):
+def getLatLong(TargetFile):
     """
-    Get the What3Words location for a target JPG file from its EXIF location data.
+    Get the Latitude and Longitude for a target JPG file from its EXIF location data.
 
     Parameters:
     TargetFile (String): whole path to JPG file
 
     Returns:
-    String: three words delimited by periods, indicating location where picture was taken
+    Tuple: (lat, long), indicating location where picture was taken
     """
 
     with open(TargetFile, "rb") as src:
         img = ExifImage(src)
         lat = decimal_coords(img.gps_latitude, img.gps_latitude_ref)
-        lon = decimal_coords(img.gps_longitude, img.gps_longitude_ref)
-        res = geocoder.convert_to_3wa(what3words.Coordinates(lat, lon))
-        w3w = f"{res['words']}"
-    return w3w
+        long = decimal_coords(img.gps_longitude, img.gps_longitude_ref)
+        return (lat, long)
 
 
-def makeFlyer(JpgFile, name, w3w, OutFolder, OutFile):
+def makeFlyer(JpgFile, name, lat, long, OutFolder, OutFile):
     """
     Create a PDF flyer for a given photo, name, and location
 
     Parameters:
     JpgFile (String): path filename of the JPG file for the flyer image
     name (String): name to be given to the flexpost, from the names.py file
-    w3w (String): location of the flexpost, from the JPG EXIF GPS data
+    lat (Double): latitude of the flexpost, from the JPG EXIF GPS data
+    long (Double): longitude of the flexpost, from the JPG EXIF GPS data
     OutFolder (String): path to the folder where output files should be written
     OutFile (String): name to be used for output PDF filename
 
@@ -127,31 +123,31 @@ def makeFlyer(JpgFile, name, w3w, OutFolder, OutFile):
     # Title
     layout.add(
         Paragraph(
-            f'Flexpost "Name": {name}',
+            f'Flexpost "{name}"',
             font_color=HexColor("#003087"),
-            font_size=Decimal(36),
+            font_size=Decimal(38),
             horizontal_alignment=Alignment.CENTERED,
         )
     )
     # Subtitle
     layout.add(
         Paragraph(
-            "Officially Unofficial Erwin Road Adopt-A-Flexpost Program",
+            "Unofficial Erwin Road Adopt-a-Flexpost Program",
             font_color=HexColor("#003087"),
-            font_size=Decimal(24),
+            font_size=Decimal(22),
             horizontal_alignment=Alignment.CENTERED,
         )
     )
 
     link0: LayoutElement = Paragraph(
-        f"What3Words Location: ///{w3w}",
+        f"Location: {lat:.6f}, {long:.6f}",
         font_color=HexColor("#003087"),
-        font_size=Decimal(20),
+        font_size=Decimal(18),
         horizontal_alignment=Alignment.CENTERED,
     )
     layout.add(link0)
     annot0: RemoteGoToAnnotation = RemoteGoToAnnotation(
-        link0.get_previous_paint_box(), uri=f"http://w3w.co/{w3w}"
+        link0.get_previous_paint_box(), uri=f"https://www.google.com/maps/search/?api=1&query={lat:.6f},{long:.6f}"
     )
     page.add_annotation(annot0)
 
@@ -169,30 +165,29 @@ def makeFlyer(JpgFile, name, w3w, OutFolder, OutFile):
 
     layout.add(
         Paragraph(
-            "Adoptee Responsibilities:",
-            font_size=Decimal(18),
-            # horizontal_alignment=Alignment.CENTERED,
+            "Responsibilities:",
+            font_size=Decimal(16),
+            horizontal_alignment=Alignment.CENTERED,
         )
     )
 
     layout.add(
         UnorderedList()
         .add(Paragraph("Clear trash and debris quarterly"))
-        .add(Paragraph("Cut back weeds and bushes annually"))
-        .add(Paragraph("Report maintenance needs to Durham OneCall"))
-        .add(Paragraph("Transfer ownership if unable to meet obligations"))
+        .add(Paragraph("Request maintenance via Durham OneCall"))
+        .add(Paragraph("Transfer duties if unable to do upkeep"))
     )
 
     # QR Code
     qr_code: LayoutElement = Barcode(
-        data=f"http://w3w.co/{w3w}",
+        data=f"https://www.google.com/maps/search/?api=1&query={lat:.6f},{long:.6f}",
         width=Decimal(64),
         height=Decimal(64),
         type=BarcodeType.QR,
     )
     flow1.add(qr_code)
-    link1: LayoutElement = ChunkOfText(
-        f"w3w.co/{w3w}",
+    link1 = ChunkOfText(
+        f"google.com/maps/search/?api=1&query={lat:.6f},{long:.6f}",
         vertical_alignment=Alignment.BOTTOM,
         font_color=HexColor("0000FF"),
     )
@@ -201,7 +196,7 @@ def makeFlyer(JpgFile, name, w3w, OutFolder, OutFile):
     flow1.add(ChunkOfText(" --Thanks! ", vertical_alignment=Alignment.BOTTOM))
     layout.add(flow1)
     annot1: RemoteGoToAnnotation = RemoteGoToAnnotation(
-        link1.get_previous_paint_box(), uri=f"http://w3w.co/{w3w}"
+        link1.get_previous_paint_box(), uri=f"https://www.google.com/maps/search/?api=1&query={lat:.6f},{long:.6f}"
     )
     page.add_annotation(annot1)
 
@@ -238,16 +233,16 @@ def main():
     OutFolder = "OutFolder"
 
     i = 0
-    print(f'"JpgPath", "What3Words", "OutputName"')
+    print(f'"JpgPath", "Latitude", "Longitude", "OutputName"')
     for filename in os.listdir(HeicFolder):
         # for each Heic file in the folder
         if filename.endswith(".heic") or filename.endswith(".HEIC"):
             TargetFile = convertToJpg(HeicFolder, filename, JpgFolder)
-            w3w = getW3w(TargetFile)
+            (lat, long) = getLatLong(TargetFile)
             name = names[i]
             OutFile = f"{i:02}-{name}"
-            print(f'"{TargetFile}", "{w3w}", "{OutFile}"')
-            makeFlyer(TargetFile, name, w3w, OutFolder, OutFile)
+            print(f'"{TargetFile}", "{lat}","{long}", "{OutFile}"')
+            makeFlyer(TargetFile, name, lat, long, OutFolder, OutFile)
             convertToPng(OutFolder, OutFile)
             i = i + 1
 
